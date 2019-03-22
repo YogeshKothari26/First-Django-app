@@ -809,7 +809,3 @@ class Strategy_Group(models.Model):
 
 	def cond_str(self):
 		return self.exp
-
-
-class hello:
-	pass
