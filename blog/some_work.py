@@ -30,7 +30,7 @@ class Work(object):
 		self.strat_group = dict()
 		self.tick_count, self.min_count = 1, 0
 
-		self.time_map = {'minute' : 1, 'day' : 13, '3minute' : 1, '5minute' : 1, '10minute' : 1, '15minute' : 2, '30minute' : 3 , '60minute' : 4}
+		self.time_map = {'minute' : 1, 'day' : 13, '3minute' : 1, '5minute' : 1, '10minute' : 1, '15minute' : 2, '30minute' : 3 , '60minute' : 5}
 
 		
 		print('###BLOCK 1')

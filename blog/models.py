@@ -738,46 +738,6 @@ class Swing_Index(Indicator):		#test_pending
 	def __str__(self):
 		return "Swing index("+ self.interval +", "+ self.limit_move_value +")"
 
-class Swing_Index(Indicator):		#test_pending
-	interval = models.CharField(max_length=100, default='day')
-	limit_move_value = models.CharField(max_length=100, default='0.5')
-
-	def evaluate(self, kite_fetcher, instrument):
-		df = self.get_small_data(kite_fetcher=kite_fetcher, instrument=instrument)
-		dailylimit = float(self.limit_move_value) 	#https://www.prorealcode.com/prorealtime-indicators/wilders-accumulative-swing-index-asi/
-
-		o, h , l , c = df['open'].iloc[-1], df['high'].iloc[-1], df['low'].iloc[-1], df['close'].iloc[-1]
-		prev_o, prev_h, prev_l, prev_c = df['open'].iloc[-2], df['high'].iloc[-2], df['low'].iloc[-2], df['close'].iloc[-2]		
-
-		AbsHighClose = abs(h - prev_c)
-		AbsLowClose = abs(l - prev_c)
-		AbsCloseOpen = abs(prev_c - prev_o)
-		AbsMaxMin = abs(h - l)
-		CloseClose = c - prev_c
-		CloseOpenToday = c - o
-		CloseOpenYesterday = prev_c - prev_o
-
-		#computation K
-		k=max(AbsHighClose,AbsLowClose)			 
-		# Computation R
-		partialR=max(AbsHighClose,max(AbsLowClose,AbsMaxMin))
-
-		if AbsHighClose == partialR :
-			r = AbsHighClose - 0.5 * AbsLowClose + 0.25 * AbsCloseOpen
-		else:
-			r = AbsMaxMin + 0.25 * AbsCloseOpen
-
-		if AbsLowClose == partialR:
-			r = AbsLowClose -0.5 * AbsHighClose + 0.25 * AbsCloseOpen
-
-		if r != 0:
-			SwingIdx = 50*((  CloseClose + 0.50 * CloseOpenToday + 0.25 * CloseOpenYesterday  ) / r ) *( k / dailylimit )
-
-		# AccumulativeSwingIdx = AccumulativeSwingIdx + SwingIdx
-		return np.round(SwingIdx, 3)
-
-	def __str__(self):
-		return "Swing index("+ self.interval +", "+ self.limit_move_value +")"
 
 
 class Alligator(Indicator):	
@@ -789,9 +749,12 @@ class Alligator(Indicator):
 	lips_period = models.CharField(max_length=100, default='5')
 	lips_offset = models.CharField(max_length=100, default='3')
 	alligator_field = models.CharField(max_length=100, default='Jaw')
+	#http://www.myeatrade.com/333/
+	#https://futures.io/ninjatrader-programming/8358-smoothed-moving-average-smma-how-avoid.html
+	# http://www.20minutetraders.com/learning/moving_averages/smooth-moving-average.php	
 
 	def evaluate(self, kite_fetcher, instrument):
-		df = self.get_small_data(kite_fetcher=kite_fetcher, instrument=instrument)
+		df = self.get_large_data(kite_fetcher=kite_fetcher, instrument=instrument)
 		
 		if(self.alligator_field == 'Jaw'):	#blue
 			period = int(self.jaw_period)
@@ -803,11 +766,18 @@ class Alligator(Indicator):
 			period = int(self.lips_period)
 			offset = int(self.lips_offset)
 
-		ma = talib.MA(df['close'], timeperiod=period)	
+		df['smma'] = 0
+		df.loc[period,'smma'] = np.mean(df.loc[:period-1,'close'])
 
-		print(str(self) + " : " + str(ma.iloc[-10:]))	
+		for i in range(period+1, len(df)):
+			df.loc[i,'smma'] = (df.loc[i-1,'smma'] *(period-1)  + df.loc[i,'close']) / period
+		#SMMA(n) = EMA(2*n - 1)
+		# ma = talib.EMA(df['close'], timeperiod= (2*period - 1))
+		# print(str(self) + " : " + str(ma.iloc[-10:]))	
+		# return np.round(ma.iloc[-1 * offset] , 3)
 
-		return np.round(ma.iloc[-1 * offset - 1] , 3)
+		print(str(self) + " : \n" + str(df.loc[:,'smma'].iloc[-10:]))	
+		return np.round(df.loc[:, 'smma'].iloc[-1 * offset] , 3)
 
 	def __str__(self):
 		return "Alligator("+ self.interval +", "+ self.alligator_field +")"
