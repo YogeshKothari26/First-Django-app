@@ -128,18 +128,60 @@
 
 
 
+<body>
+  
+  <script>
+    var strat_names = "", strat_ids="";
+
+    function compselect(id, name)
+    {
+      strat_names = strat_names + name;
+      strat_ids = strat_ids + id;
+       document.getElementById("groupid").value= strat_ids;
+       document.getElementById("groupstring").value= strat_names;
+    }
+
+    function clear_all(){
+        strat_names = "";
+        strat_ids="";
+        document.getElementById("groupid").value= strat_ids;
+        document.getElementById("groupstring").value= strat_names;
+    }
+
+    function and(){
+        strat_names = strat_names + " and ";
+      strat_ids = strat_ids + " and ";
+        document.getElementById("groupid").value= strat_ids;
+       document.getElementById("groupstring").value= strat_names;
+    }
+
+
+    function or(){
+        strat_names = strat_names + " or ";
+      strat_ids = strat_ids + " or ";
+        document.getElementById("groupid").value= strat_ids;
+       document.getElementById("groupstring").value= strat_names;
+    }
 
 
 
+    function myFunction() {
+      var input, filter, ul, li, a, i;
+      input = document.getElementById("mySearch");
+      filter = input.value.toUpperCase();
+      ul = document.getElementById("myMenu");
+      li = ul.getElementsByTagName("li");
+      for (i = 0; i < li.length; i++) {
+        a = li[i].getElementsByTagName("a")[0];
+        if (a.innerHTML.toUpperCase().indexOf(filter) > -1) {
+          li[i].style.display = "";
+        } else {
+          li[i].style.display = "none";
+        }
+      }
+    }
 
-
-
-
-
-
-
-    <body>
-  <!-- Navigation Bar -->
+  </script>
 
       <nav class="navbar navbar-default" id="naav" >
       <div class="container-fluid">
@@ -147,7 +189,7 @@
           <a class="navbar-brand" href="#">Sabertooth</a>
         </div>
         <ul class="nav navbar-nav">
-          <li><a href="#">Home</a></li>
+          <li><a href="{% url 'clist' %}">Home</a></li>
           <li><a href="{% url 'manage' %}">Manage</a></li>
           <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
         </ul>
@@ -161,7 +203,7 @@
         <input type="text" id="mySearch" onkeyup="myFunction()" placeholder="Search.." title="Type in a category">
         <ul id="myMenu">
          {% for strategy in strat_list %}
-         <li><a href="{% url 'stratselect' pk=strategy.pk %}" onclick="compselect()">{{strategy.name}}({{strategy.instrument}})</a></li>  
+         <li><a onclick= "compselect('{{strategy.pk}}', '{{strategy.name}}' )">{{strategy.name}}({{strategy.instrument}})</a></li>  
         {% endfor %}
         
           
@@ -186,7 +228,9 @@
 
    <div class="form-group">
     <label for="text">Create your String</label>
-    <input type="text" class="form-control" id="groupname" name="groupstring" value="{{stratstring}}" required="true" readonly="true" />
+    <input type="text" class="form-control" id="groupstring" name="groupstring" required="true" readonly="true" />
+    <!-- <label for="text">Hidden</label> -->
+    <input type="hidden" class="form-control" id="groupid" name="hidden_id"  required="true" readonly="true" />
   </div>
 
     <div class="form-group">
@@ -195,57 +239,11 @@
   </div>
 
    
-     
+    
 
-  
-
-
-<!-- Enter the form here -->
-
-<!--   <div class="form-group">
-    <label for="text">Instrument</label>
-    <input type="text" class="form-control" id="instrument" name="instrument" value="{{instrumentlist}}" required="true" />
-  </div>
-  <div class="form-group">
-    <label for="select1">Select an Indicator:</label>
-  <select class="form-control" id="select1" name="indicator1" onchange="ind1()">
-
-
-     {% for attr in indicatorlist %}
-      
-
-     
-    <option value="{{attr}}">{{attr}}</option>
-    {% endfor %}
-    <p>{{comp.name}}</p>
-   
-  </select>
-  </div>
-
-   <div class="form-group">
-    <label for="comparator">Select a Comparator:</label>
-  <select class="form-control" id="comparator" name="comparator">
-    <option value="1">Greater Than</option>
-    <option value="2">Less Than</option>
-    <option value="3">Crosses Above</option>
-    <option value="4">Crosses Below</option>
-  </select>
-  </div>
-   <label for="select2">Select an Indicator to compare to:</label>
-  <select class="form-control" id="select2" name="indicator2" onchange="ind2()">
-    {% for attr in indicatorlist %}
-    <option value="{{attr}}">{{attr}}</option>
-    {% endfor %}
-  </select>
-  <div class="form-group">
-    <label for="text">Strategy</label>
-    <input type="text" class="form-control" id="instrument" value="" name="name" required />
-  </div>
-   <button type="submit" formaction="next" type="submit" value="next" class="btn btn-default">Next</button> -->
-
-   <a class="btn btn-default" id="clear" href="{% url 'stratclear' %}">Clear</a>
-   <a class="btn btn-default" id="clear" href="{% url 'stratAnd' %}">And</a>
-   <a class="btn btn-default" id="clear" href="{% url 'stratOr' %}">Or</a>
+   <a class="btn btn-default" id="clear" onclick="clear_all()">Clear</a>
+   <a class="btn btn-default" id="and" onclick="and()">And</a>
+   <a class="btn btn-default" id="or" onclick="or()">Or</a>
    <br>
    <br>
 
@@ -265,137 +263,9 @@
  
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-       <!--  <form action="" method="POST">
-          {% csrf_token %}
-          <div class="heading">
-           <h1>Enter the strategy details</h1>
-           </div>
-       
-          <p><b>Instrument:</b> 
-            
-          <input type="text" id="inst" name="instrument" value="{{comp.token}}"> ({{comp.name}})
-          
-          </p>
-          
-          <div class="Indicator">
-            <p><b>Select an Indicator  </b>  
-             <select id="indicatorselect" name="indicator1">
-                <option value="1">Moving Average</option>
-                <option value="2">RSI</option>
-                <option value="3">Price</option>
-                <option value="4">High</option>
-                <option value="5">Low</option>
-             </select>
-            </p>
-          </div>
-          <div class="indicator1option1"></div>
-          <div class="indicator1option1"></div>
-          
-          <div class="Comparator" >
-            <p><b>Select a Comparator  </b>
-              <select id="comparatorselect" name="comparator">
-                <option value="1">Greater than</option>
-                <option value="2">Lower than</option>
-                </select>
-            </p>
-          </div>
-          <p></p>
-          <div class="Indicator2">
-     
-            <p><b>Select an Indicator to compare to </b>  
-             <select id="indicatorselect2" name="indicator2">
-                <option value="MovingAverage">Moving Average</option>
-                <option value="RSI">RSI</option>
-                <option value="Price">Price</option>
-                <option value="High">High</option>
-                <option value="Low">Low</option>
-             </select>
-             </p>
-             <p> </p>
-          </div>
-            <div class="indicator1option1"></div>
-          <div class="indicator1option1"></div>
-          
-          <b>Strategy:</b>
-          <input type="text" name="name" value="">
-          <input formaction="submit" type="submit" value="Submit"/>
-        </form>
-        </div>
-        <p></p>
- -->
-
-
-
-
     </div>
   </div>
 
 
-    <script>
-    function myFunction() {
-      var input, filter, ul, li, a, i;
-      input = document.getElementById("mySearch");
-      filter = input.value.toUpperCase();
-      ul = document.getElementById("myMenu");
-      li = ul.getElementsByTagName("li");
-      for (i = 0; i < li.length; i++) {
-        a = li[i].getElementsByTagName("a")[0];
-        if (a.innerHTML.toUpperCase().indexOf(filter) > -1) {
-          li[i].style.display = "";
-        } else {
-          li[i].style.display = "none";
-        }
-      }
-    }
-    function ind1()
-     {
-   
-      var x = document.getElementById("select1").value;
-      var y = document.getElementById("indicator1option").value;
-    
-      if(x=="MovingAverage")
-      {
-         
-        document.getElementById("ma1").style.visibility="visible";
-      }
-      else if(x=="BollingerBand")
-      {
-        document.getElementById("boll1").style.visibility="visible";
-      }
-      
-    }
-     function ind2()
-     {
-      var x = document.getElementById("mySelect").value;
-      
-    }
-    function compselect()
-    {
-       document.getElementById("id_instrument").innerHTML="{{comp.token}}";
-    }
-    </script>
     </body>
     </html>

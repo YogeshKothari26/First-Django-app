@@ -35,7 +35,11 @@ class Work(object):
 		
 		print('###BLOCK 1')
 		for s in self.strat_list:
-			t = int(s.instrument)
+			try:
+				t = int(s.instrument)
+			except:
+				print(str(s))
+				print('\n\nerror in : ' + str(s.instrument))
 			self.tokens.append(t)
 			self.global_data[t] = dict({'price':0, 'volume':0})		#'price' == 'close'
 			self.strat_data[s.pk] = dict({'status' : False, 'indicator1':0, 'indicator2':0, 'timestamp':pd.Timestamp('today')})

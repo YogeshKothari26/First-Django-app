@@ -7,21 +7,6 @@ from model_utils.managers import InheritanceManager
 import talib
 
 
-class Post(models.Model):
-	author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-	title = models.CharField(max_length=200)
-	text = models.TextField()
-	created_date = models.DateTimeField(default=timezone.now)
-	published_date = models.DateTimeField(blank=True, null=True,default=timezone.now)
-
-	def publish(self):
-		self.published_date = timezone.now()
-		self.save()
-
-	def __str__(self):
-		return self.title
-
-
 class Companies(models.Model):
 	name = models.CharField(max_length=100)
 	token = models.CharField(max_length=100)
@@ -51,6 +36,7 @@ class Choices():
 	PMO_type = list()
 	use_volume = list()
 	alligator_field = list()
+	up_down = list()
 
 	def __init__(self):
 		 self.interval = ['minute', 'day', '3minute','5minute','10minute','15minute','30minute','60minute']
@@ -63,6 +49,7 @@ class Choices():
 		 self.PMO_type = ['PMO', 'PMO_signal']
 		 self.use_volume = ['Yes', 'No']
 		 self.alligator_field = ['Jaw', 'Teeth', 'Lips']
+		 self.up_down = ["up", "down"]
 
 
 
@@ -226,6 +213,26 @@ class ADX(Indicator):	#Average Directional Movement
 
 	def __str__(self):
 		return "ADX("+ self.period +", "+ self.interval +")"	
+
+
+class Aroon(Indicator):	#Uptrend or Downtrend
+	period = models.CharField(max_length=100, default='14')
+	interval = models.CharField(max_length=100, default='minute')
+	up_down = models.CharField(max_length=100, default='up')
+
+	def evaluate(self, kite_fetcher, instrument):
+		period = int(self.period)
+		df = self.get_small_data(kite_fetcher=kite_fetcher, instrument=instrument)
+
+		down, up = talib.AROON(high=df['high'], low=df['low'], timeperiod=period)
+		if(self.up_down == 'up'):
+			result = up
+		else:
+			result = down
+		return np.round(result.iloc[-1] , 2)
+
+	def __str__(self):
+		return "Aroon("+ self.period +", "+ self.up_down +", "+ self.interval +")"	
 
 
 class Aroon_Oscillator(Indicator):	#Uptrend or Downtrend
@@ -731,6 +738,8 @@ class Swing_Index(Indicator):		#test_pending
 
 		if r != 0:
 			SwingIdx = 50*((  CloseClose + 0.50 * CloseOpenToday + 0.25 * CloseOpenYesterday  ) / r ) *( k / dailylimit )
+		else:
+			SwingIdx = 0
 
 		# AccumulativeSwingIdx = AccumulativeSwingIdx + SwingIdx
 		return np.round(SwingIdx, 3)
@@ -782,6 +791,57 @@ class Alligator(Indicator):
 	def __str__(self):
 		return "Alligator("+ self.interval +", "+ self.alligator_field +")"
 
+
+class Awesome_Oscillator(Indicator):	
+	interval = models.CharField(max_length=100, default='minute')
+
+	def evaluate(self, kite_fetcher, instrument):
+		df = self.get_small_data(kite_fetcher=kite_fetcher, instrument=instrument)
+
+		df['median'] = (df.loc[:, 'high'] + df.loc[:, 'low']) / 2
+		# sma_5 = talib.MA(df['median'], timeperiod=5)
+		# sma_34 = talib.MA(df['median'], timeperiod=34)
+		try:
+			# result = sma_5.iloc[-1] - sma_34.iloc[-1]
+			result = np.mean(df.loc[:, 'median'].iloc[-5:]) - np.mean(df.loc[:, 'median'].iloc[-34:])
+		except:
+			result = 0
+		return np.round(result, 3)
+
+	def __str__(self):
+		return "Awesome_Oscillator("+ self.interval +")"
+
+class Williams(Indicator):
+	period = models.CharField(max_length=100, default='14')
+	interval = models.CharField(max_length=100, default='minute')
+
+	def evaluate(self, kite_fetcher, instrument):
+		period = int(self.period)
+		df = self.get_small_data(kite_fetcher=kite_fetcher, instrument=instrument)
+
+		result=talib.WILLR(high=df['high'], low=df['low'], close=df['close'],timeperiod=period)
+		return np.round(result.iloc[-1],3)
+
+
+	def __str__(self):
+		return "Williams("+ self.period +", "+ self.interval +")"
+
+
+
+class Ultimate_Oscillator(Indicator):
+	cycle1 = models.CharField(max_length=100, default='7')
+	cycle2 = models.CharField(max_length=100, default='14')
+	cycle3 = models.CharField(max_length=100, default='28')
+	interval = models.CharField(max_length=100, default='minute')
+
+	def evaluate(self, kite_fetcher, instrument):
+		df = self.get_small_data(kite_fetcher=kite_fetcher, instrument=instrument)
+		result=talib.ULTOSC(high=df['high'], low=df['low'], close=df['close'],timeperiod1=int(self.cycle1),timeperiod2=int(self.cycle2),timeperiod3=int(self.cycle3))
+		return np.round(result.iloc[-1],3)
+
+
+	def __str__(self):
+		return "UltimateOsc("+ self.interval +")"
 
 
 class Strategy(models.Model):
