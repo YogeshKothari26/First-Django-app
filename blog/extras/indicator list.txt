@@ -4,7 +4,7 @@ ATR Trailing Stops
 		Accumulation/Distribution
 Accumulative Swing Index
 Alligator
-Aroon
+		Aroon
 		Aroon Oscillator
 		Average True Range
 Awesome Oscillator
