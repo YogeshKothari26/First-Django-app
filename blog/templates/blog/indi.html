@@ -1,0 +1,380 @@
+{% load staticfiles %}
+{% load extras %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <link rel="icon" href="../../../../favicon.ico">
+
+  <title>Screener</title>
+ 
+ 
+
+
+
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css"> -->
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+
+
+
+<!--   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script> -->
+
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+  <!-- Bootstrap core CSS -->
+
+
+
+  <link  rel="stylesheet" href="{% static "css/homepage.css" %}">
+
+
+  
+</head>
+
+<body>
+
+  <!-- Upper Nav and details -->
+
+  <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    <a class="navbar-brand" href="#">Sabertooth</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="{% url 'clist' %}">Home <span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="Pharmacies.html"></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link " href="{% url 'manage' %}">Manage</a>
+          <li class="nav-item">
+          <a class="nav-link " href="{% url 'stratgroup' %}">Strategy Group</a>
+        </li>
+
+
+      </ul>
+      <form class="form-inline my-2 my-lg-0">
+        <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
+        <button class="btn btn-outline-success my-2 my-sm-0" type="submit" >Search</button>
+      </form>
+    </div>
+    <div >
+      <a class="nav-link" href="login.html">Sign Up/Login </a>
+    </div>
+  </nav>
+
+  <main role="main">
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+<!--     <div class="jumbotron">
+      <div class="container">
+        <h1 class="display-3">Welcome to Sabertooth</h1>
+        <p>A Screener for all your trading requirements</p>
+        <p><a class="btn btn-primary btn-lg" href="about.html" role="button">Learn more &raquo;</a></p>
+      </div>
+    </div> -->
+    <div class="container" >
+      <div class="col-md-6 col-md-offset-3">     
+        <div class="row">
+
+          <!-- <form role="form" id="form-buscar"> -->
+<!-- <div class="form-group">
+<div class="input-group">
+
+<input id="1" class="form-control" type="text" name="search" placeholder="Search..." size=170px  />
+<span class="input-group-btn">
+<button class="btn btn-success" type="submit">
+<i class="glyphicon glyphicon-search" aria-hidden="true"></i> Search
+</button>
+</span>
+</div>
+</div> -->
+
+
+
+
+
+<!-- </form> -->
+<section id="container" >
+  <div class="left">
+    <div class="dropdown">
+      <button onclick="myFunction('myDropdown')" class="dropbtn">Select Instrument</button>
+      <div id="myDropdown" class="dropdown-content">
+        <input type="text" placeholder="Search.." id="myInput" onkeyup="filterFunction('myInput','myDropdown')">
+        <ul id="myMenu" size="10" >
+        <li><a class="btn btn-primary" id="clear" onclick="clear_all()">Clear</a></li>
+
+        {% for company in companies %}
+
+
+       
+
+        <li><a onclick="Instrument_Select('{{company.name}}','{{company.fullname}}','{{company.token}}','myDropdown')">{{company.fullname}}</a></li>
+        {% endfor %}
+        </ul>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <input id="instrument_list_disp" class="form-control" type="text" name="search" placeholder="Search..." size="370px"  />
+
+
+  </div>
+
+
+
+
+</section>
+<div class="inline">
+  <div class="dropdown" id="Study">
+    <button onclick="myFunction('Indicator_Dropdown')" id="Study" class="dropbtn">Create Study</button>
+     <div id="Indicator_Dropdown" class="dropdown-content">
+        <input type="text" placeholder="Search.." id="myInput2" onkeyup="filterFunction('myInput2','Indicator_Dropdown')">
+        <ul id="myMenu" size="10" >
+        <!-- <a class="btn btn-primary" id="clear" onclick="clear_all()">Clear</a> -->
+
+        {% for indicator in indicatorlist %}
+
+
+
+
+
+        <li><a onclick="PopUp('{{indicator}}')" data-toggle="modal" data-target="#modalLoginForm">{{indicator}}</a></li>
+        {% endfor %}
+      </ul>
+
+      </div>
+  </div>
+  </div>
+</div>            
+</div>
+</div>
+
+
+  <div class="chip-container">
+  <div class="inline" id="chips"></div>
+  </div>
+
+
+
+
+<div class="modal fade" id="modalLoginForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title  font-weight-bold">Enter the details</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body " id="body">
+       <!--  <div class="form-group">
+            <label for="recipient-name" class="col-form-label">Recipient:</label>
+            <input type="text" class="form-control" id="recipient-name">
+          </div> -->
+
+           <div class="modal-footer d-flex justify-content-center">
+        <button class="btn btn-default" data-dismiss="modal">Submit</button>
+      </div>
+
+
+
+        </div>
+
+      </div>
+     
+    </div>
+  </div>
+</div>
+
+<!-- <div class="text-center">
+  <a href="" class="btn btn-default btn-rounded mb-4" data-toggle="modal" data-target="#modalLoginForm">Launch
+    Modal Login Form</a>
+</div> -->
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</main>
+
+
+
+<script>
+  var instrument_list="";
+  var instrument_token_list="";
+  var chip="";
+  
+  function filterFunction(id,div) {
+    var input, filter, ul, li, a, i;
+    input = document.getElementById(id);
+    filter = input.value.toUpperCase();
+    div = document.getElementById(div);
+    a = div.getElementsByTagName("a");
+    for (i = 0; i < a.length; i++) {
+      txtValue = a[i].textContent || a[i].innerText;
+      if (txtValue.toUpperCase().indexOf(filter) > -1) {
+        a[i].style.display = "";
+      } else {
+        a[i].style.display = "none";
+      }
+    }
+  }
+  function myFunction(div) {
+    document.getElementById(div).classList.toggle("show");
+  }
+
+  function Instrument_Select(name,fullname,token,div) {
+
+
+
+   instrument_list=name+", "+instrument_list;
+   instrument_token_list=token+","+instrument_token_list;
+   document.getElementById("instrument_list_disp").value= instrument_list;
+   document.getElementById(div).display="none";
+
+
+ }
+
+ function clear_all()
+ {
+  instrument_list="";
+  instrument_token_list="";
+  document.getElementById("instrument_list_disp").value= instrument_list;
+}
+ function PopUp(indicator)
+ {
+
+
+    var formUrl = '{% url "indicator_popup" 123 %}'.replace('123', indicator);  
+    indicator=indicator.valueOf();       
+
+    fetch(formUrl).then(function(response) {
+      response.json().then(function(data) {
+              var form_str = "";
+              fields = data['fields'];
+              choice = data['choice'];
+             
+
+              for(var key in fields){
+
+          //       <!--  <div class="form-group">
+          //   <label for="recipient-name" class="col-form-label">Recipient:</label>
+          //   <input type="text" class="form-control" id="recipient-name">
+          // </div> -->
+
+               
+                form_str += "<div class=\"form-group\"><label class=\"label\" for='"+key+"'>"+key+"</label>";
+            
+                if(choice.hasOwnProperty(key)){
+                  // form_str += "<select class='form-control' id='"+key+"' name='"key+"' onchange='indi1()'>";
+                  form_str += "  <select class='form-control' name='"+key+"'>";
+                  // form_str += "<h3>"+key+"</h3>";
+
+                    for(var key2 in choice[key]){
+                      form_str += "<option value='"+choice[key][key2]+"'>"+choice[key][key2]+"</option>";
+                      // form_str += " | " + choice[key][key2];
+                    }
+                    
+                  form_str += "</select>";
+                }
+                else{
+                  form_str += "  <input type=\"text\" class=\"form-control\"  name='"+key+"' value= '"+fields[key]+"' required>";
+                  // form_str += " |" + fields[key];
+                }
+                form_str +="<br><br></div>";
+
+                // if(choice.hasOwnProperty(key)){
+                //  form_str += "dropdown : "+ json.stringify(choice[key]) +"<br><br>";
+                // }
+              }
+              form_str += "<br>  <button class=\" btn btn-primary\"  data-dismiss=\"modal\" formaction=\"formsubmit\" type=\"submit\" value=\"Submit\"    >Submit</button>";
+
+
+
+
+              
+              // console.log(form_str);
+
+              document.getElementById("body").innerHTML = form_str;
+              
+            });
+          });   
+
+
+
+
+
+
+
+
+
+  
+
+
+  chip=chip+"<div class=\"chip\"> John Doe <span class=\"closebtn\" onclick=\"this.parentElement.style.display=\'none\'\">&times;</span></div>";
+
+  document.getElementById("chips").innerHTML=chip;
+
+}
+
+</script>
+
+</body>
+</html>

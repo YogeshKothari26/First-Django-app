@@ -1,0 +1,785 @@
+{% load staticfiles %}
+{% load extras %}
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="description" content="">
+	<meta name="author" content="">
+	<link rel="icon" href="../../../../favicon.ico">
+
+	<title>Screener</title>
+
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="http://malsup.github.com/jquery.form.js"></script> 
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+	<link  rel="stylesheet" href="{% static "css/homepage.css" %}">
+
+</head>
+
+<body>
+
+	<!-- Upper Nav and details -->
+
+	<nav class="navbar navbar-expand-md fixed-top">
+		<a class="navbar-brand" href="#">Sabertooth</a>
+		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+
+		<div class="collapse navbar-collapse" id="navbarsExampleDefault">
+			<ul class="navbar-nav mr-auto">
+				<li class="nav-item active">
+					<a class="nav-link" href="{% url 'clist' %}">Home <span class="sr-only">(current)</span></a>
+				</li>
+
+				<li class="nav-item">
+					<a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link " href="{% url 'manage' %}">Manage</a>
+
+
+				</ul>
+				<form class="form-inline my-2 my-lg-0">
+					<input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
+					<button class="btn btn-outline-success my-2 my-sm-0" type="submit" >Search</button>
+				</form>
+			</div>
+			<div >
+				<a class="nav-link" href="{% url 'login' %}">Sign Up/Login </a>
+			</div>
+	</nav>
+
+
+
+		<main role="main">
+			<form action="form_sub" method="POST" onsubmit="return validateForm()">
+				<!-- return validateForm() -->
+						{% csrf_token %}
+
+			<div class="container" >
+				<div class="col-md-6 col-md-offset-3">     
+					<div class="row">
+
+						
+						<!-- </form> -->
+
+
+						<!-- Hidden Fields -->
+
+						<input type="hidden" id="token_list" name="token_list">
+						<!-- List of Instruments -->
+						<input type="hidden" id="study_list" name="study_list">
+						<!-- List of Studies -->
+
+
+						<input type="hidden" id="strategy_part-11" name="strategy_part-11" value="Choose Study">
+						<input type="hidden" id="strategy_part-12" name="strategy_part-12" value="Choose Comparator">
+						<input type="hidden" id="strategy_part-13" name="strategy_part-13" value="Choose Study">
+
+						<input type="hidden" id="strategy_indicator_name-11" name="strategy_indicator_name-11" value="NA">
+						<input type="hidden" id="strategy_indicator_name-13" name="strategy_indicator_name-13" value="NA">
+						<!-- Fields of Strategy -->
+
+
+						<!-- Other strategy fields are created dynamically -->
+
+						
+
+
+						<input type="hidden" id="entry_condition" name="entry_condition" value="Buy">
+						<!-- Entry/Exit Condition -->
+
+
+						<input type="hidden" id="no_of_strat" name="no_of_strat" value="1">
+						<!-- No of STrategies for reference in views -->
+
+
+
+						
+						<section id="container-IS" >
+							
+							<div class="dropdown">
+								<button onclick="myFunction('Instrument_Dropdown')" type="button" id="Button_Instrument" class="dropbtn">Select Instrument</button>
+								<div id="Instrument_Dropdown" class="dropdown-content">
+									<input type="text" placeholder="Search.." class="myInput" id="myInput" onkeyup="filterFunction('myInput','Instrument_Dropdown')">
+									<ul id="myMenu" size="10" >
+										<li><a class="btn btn-primary" id="clear" onclick="clear_all()">Clear</a></li>
+
+										{% for company in companies %}
+
+
+										<li><a onclick="Instrument_Select('{{company.name}}','{{company.fullname}}','{{company.token}}','Instrument_Dropdown')">{{company.fullname}}</a></li>
+										{% endfor %}
+
+
+										{% for w in watchlist %}
+
+										<li><a onclick="Watchlist_Select('{{w.name}}','{{w.company_list}}','Instrument_Dropdown')">{{w.name}}</a></li>
+										{% endfor %}
+
+
+									</ul>
+
+								</div>
+							</div>
+
+							<div id="div_text">
+								<input id="instrument_list_disp" class="form-control" type="text" name="search" placeholder="Search..."   required="true" />
+
+
+							</div>
+
+							<br>
+							
+						</section>
+
+			
+						<div class="dropdown">
+							<button onclick="myFunction('Indicator_Dropdown')" id="Button_Study" type="button" class="dropbtn">Create Study</button>
+							<div id="Indicator_Dropdown" class="dropdown-content">
+								<input type="text" placeholder="Search.." class="myInput" id="myInput2" onkeyup="filterFunction('myInput2','Indicator_Dropdown')">
+								<ul id="myMenu2" size="10" >
+								
+
+									{% for indicator in indicatorlist %}
+
+									<li><a onclick="PopUp('{{indicator}}')" data-toggle="modal" data-target="#modalLoginForm">{{indicator}}</a></li>
+									{% endfor %}
+								</ul>
+
+							</div>
+						</div>
+						
+
+						<div class="chip-container">
+							<div class="inline" id="chips"></div>
+						</div>
+						<br>
+					</div>       
+				</div>     
+				
+
+				<div class="strategy_group" id="Strategy_Container">
+
+
+					<div  id="Study_Container-1" class="Study_Class">   
+
+
+						<div class="dropdown" id="Strategy-11">
+							<button onclick="myFunction2(this.id)" type="button" id="strategy_button-11" class="dropbtn2">Choose Study</button>
+							<div id="list_div-11" class="dropdown-content">
+								<input type="text" placeholder="Search.." class="myInput" id="myInput-11" onkeyup="filterFunction(this.id,this.parentElement.id)">
+								<ul class="dropdown_list_class" id="strategy_list-11" size="10" >
+
+
+
+								</ul>
+
+							</div>
+
+
+						</div>
+						<div class="dropdown" id="Strategy-12" >
+							<button onclick="myFunction2(this.id)" type="button" id="comparator-1" class="dropbtn2">Choose Comparator</button>
+							<div id="list_div-12" class="dropdown-content">
+								<input type="text" placeholder="Search.." class="myInput" id="myInput-12" onkeyup="filterFunction(this.id,this.parentElement.id)">
+								<ul class="dropdown_list_class" id="strategy_list-12" size="10" >
+								</ul>
+
+							</div>
+
+
+						</div>
+						<div class="dropdown" id="Strategy-13">
+							<button onclick="myFunction2(this.id)" type="button" id="strategy_button-13" class="dropbtn2">Choose Study</button>
+							<div id="list_div-13" class="dropdown-content">
+								<input type="text" placeholder="Search.." class="myInput" id="myInput-13" onkeyup="filterFunction(this.id,this.parentElement.id)">
+								<ul class="dropdown_list_class" id="strategy_list-13" size="10" >
+								</ul>
+
+							</div>
+
+
+						</div>
+						<br>
+						<br>
+						<br>
+					</div>
+
+				</div>
+			</div>
+
+
+			<a class="anchor" onclick="add_stratgroup()" id="add_group">Add another?</a>
+
+			<br>
+			<br>
+			<br>
+
+
+			<div class="form-group container">
+				<label id="entry_label" for="name"><b>Entry/Exit condition:</b></label>
+				<button onclick="changeCondition(this.id)" id="entry" type="button" name="entry" class="entry_class" value="Buy" >Buy</button>
+			</div>
+			<br>
+
+			<div class="form-group container">
+				<label id="Label_Name" for="name"><b>Name of the Group:</b></label>
+				<input type="text" class="form-control" id="group_name" name="group_name" placeholder="Name" required="true">
+				<button id="submit" type="submit" class="btn btn-primary" value="submit"  >Submit</button>
+
+			</div>
+		</form>
+
+			
+
+
+
+
+
+			<!-- Modal -->
+			<div class="modal fade" id="modalLoginForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+			aria-hidden="true">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header text-center">
+						<h4 class="modal-title  font-weight-bold">Enter the details</h4>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body " id="body">
+						<form id="formsubmit1" action='{% url "create_indicator" %}' method="POST">
+							{% csrf_token %} 
+
+							<div id="dynamic_form"></div>
+
+							<button class="btn btn-primary" method="POST" data-dismiss="modal" type="submit" value="Submit" id="pop_up_submit" onclick="form_submit1()">Submit</button>
+
+						</form>
+
+					</div>
+
+				</div>
+
+			</div>
+
+			</div>
+	</main>
+
+
+
+	<script>
+		var instrument_list="";
+		var instrument_token_list="";
+		var chip="";
+		var indi_dict = {};
+		var indicator_arr = [];
+		var indicator_name_arr = [];
+		var No_Of_Strategy=1;
+		var study_dict={};
+		var model_dict={};
+		var comparators=
+		{
+			GreaterThan:"0",
+			LessThan:"1",
+			CrossesAbove:"2",
+			CrossesBelow:"3"
+
+		};
+
+
+		function validateForm()
+		{
+
+			var ins_length=instrument_token_list.length;
+			var study_length=indicator_arr.length;
+
+
+			if(ins_length == 0)
+			{
+				alert("Please select an instrument by pressing the button");
+				return false;
+
+
+			}
+			else if (study_length == 0)
+			 {
+			 	alert("Please select a study by pressing the button");
+				return false;
+			 }
+			
+			for( var i=1;i<=No_Of_Strategy;i++)
+			{
+				
+				for( var j=1;j<4;j++)
+				{
+					// Checking all strategy fields are filled
+					var val=document.getElementById("strategy_part-"+i+j).value;
+					if(val.includes("Choose"))
+					{
+						alert("Please fill all the necessary fields in the strategies ");
+						return false;
+					}
+				}
+			}
+			return true;
+			
+		}
+		function changeCondition(id)
+		{
+
+		 
+		 // Changing Values of the Buttons
+		 var pos=id.split("-");
+		 var val=document.getElementById(id).value;
+		 var x=No_Of_Strategy-1;
+		 if(val == 'And')
+		 {
+		 	document.getElementById(id).value= 'Or';
+		 	document.getElementById(id).innerHTML= 'Or';
+		 	document.getElementById("strategy_condition-"+x).value= 'Or';
+
+
+		 }
+		 else if(val =="Or")
+		 {
+		 	document.getElementById(id).value= 'And';
+		 	document.getElementById(id).innerHTML= 'And';
+		 	document.getElementById("strategy_condition-"+x).value= 'And';
+		 }
+		 else if(val =="Buy")
+		 {
+		 	document.getElementById(id).value= 'Sell';
+		 	document.getElementById(id).innerHTML= 'Sell';
+		 	document.getElementById("entry_condition").value= 'Sell';
+
+		 }
+		 else if(val =="Sell")
+		 {
+		 	document.getElementById(id).value= 'Buy';
+		 	document.getElementById(id).innerHTML= 'Buy';
+		 	document.getElementById("entry_condition").value= 'Buy';
+		 }
+		}
+
+
+
+
+
+	//Cloning and setting new IDs to elements of the clone(Strategies)
+	function add_stratgroup()
+	{
+		No_Of_Strategy=No_Of_Strategy+1;
+		document.getElementById("no_of_strat").value=No_Of_Strategy;
+
+
+		//Adding dynamic button for Condition  And/Or
+		var condition = document.createElement("button");
+		var No_of_Conditions= parseInt(No_Of_Strategy)-1;
+		condition.setAttribute("id","Condition-"+No_of_Conditions);
+		condition.setAttribute("onclick","changeCondition("+"\"Condition-"+No_of_Conditions+"\")");
+		condition.setAttribute("value","And");
+		condition.setAttribute("class","conditions");
+		condition.setAttribute("type","button");
+		condition.appendChild(document.createTextNode("And"));
+		var element = document.getElementById("Strategy_Container");
+		element.appendChild(condition);
+
+		
+		//Cloning the 3 buttons
+		var x=No_Of_Strategy-1;
+		var clone=$('#Study_Container-'+x).clone().prop("id","Study_Container-"+No_Of_Strategy);
+		$('#Strategy_Container').append(clone);
+		var parent_id=clone.attr('id');
+		var parent_div = document.getElementById(parent_id).querySelectorAll("div");
+		
+
+		// i ranges from 0 to 5. Hence 6 items in a strategy 
+		for (i = 0; i < parent_div.length; i++)
+		{
+			
+			var temp=(i/2)+1;
+			temp=Math.floor(temp);
+			var position=parent_div[i].id.split("-");
+			parent_div[i].setAttribute("id",position[0]+"-"+No_Of_Strategy+temp);
+			
+
+
+			if(i%2 == 0)
+			{
+
+				var button = document.getElementById(parent_div[i].id).querySelectorAll("button");
+				var position_array=button[0].id.split("-");
+				if(position_array[0].includes("comparator"))
+				{
+					
+					button[0].setAttribute("id",position_array[0]+"-"+No_Of_Strategy);
+					button[0].innerHTML = "Choose comparator";
+				}
+				else
+				{
+					button[0].setAttribute("id",position_array[0]+"-"+No_Of_Strategy+temp);
+					button[0].innerHTML = "Choose Study";
+				}
+
+
+			}
+
+			if(i%2 == 1)
+			{
+				var children = document.getElementById(parent_div[i].id).querySelectorAll("input");
+				var position_array=children[0].id.split("-");
+				children[0].setAttribute("id",position_array[0]+"-"+No_Of_Strategy+temp);
+
+				var children = document.getElementById(parent_div[i].id).querySelectorAll("ul");
+				var position_array=children[0].id.split("-");
+				children[0].setAttribute("id",position_array[0]+"-"+No_Of_Strategy+temp);
+				
+				
+
+			}
+			
+
+		}
+
+
+		//Creating hidden fields for newly created strategies
+		
+		var field1 = document.createElement("input");
+		field1.setAttribute("type","hidden");
+		field1.setAttribute("value","Choose Study");
+		field1.setAttribute("id","strategy_part-"+No_Of_Strategy+"1");
+		field1.setAttribute("name","strategy_part-"+No_Of_Strategy+"1");
+
+		var field2 = document.createElement("input");
+		field2.setAttribute("type","hidden");
+		field2.setAttribute("value","Choose Comparator");
+		field2.setAttribute("name","strategy_part-"+No_Of_Strategy+"2");
+		field2.setAttribute("id","strategy_part-"+No_Of_Strategy+"2");
+
+		var field3 = document.createElement("input");
+		field3.setAttribute("type","hidden");
+		field3.setAttribute("name","strategy_part-"+No_Of_Strategy+"3");
+		field3.setAttribute("id","strategy_part-"+No_Of_Strategy+"3");
+		field3.setAttribute("value","Choose Study");
+
+		var x=No_Of_Strategy-1;
+
+		var field4 = document.createElement("input");
+		field4.setAttribute("type","hidden");
+		field4.setAttribute("name","strategy_condition-"+x);
+		field4.setAttribute("id","strategy_condition-"+x);
+		field4.setAttribute("value","And");
+
+		var field5 = document.createElement("input");
+		field5.setAttribute("type","hidden");
+		field5.setAttribute("name","strategy_indicator_name-"+No_Of_Strategy+"1");
+		field5.setAttribute("id","strategy_indicator_name-"+No_Of_Strategy+"1");
+		field5.setAttribute("value","NA");
+
+		var field6 = document.createElement("input");
+		field6.setAttribute("type","hidden");
+		field6.setAttribute("name","strategy_indicator_name-"+No_Of_Strategy+"3");
+		field6.setAttribute("id","strategy_indicator_name-"+No_Of_Strategy+"3");
+		field6.setAttribute("value","NA");
+
+
+
+		var sc = document.getElementById("Strategy_Container");
+
+
+		sc.appendChild(field1);
+		sc.appendChild(field2);
+		sc.appendChild(field3);
+		sc.appendChild(field4);
+		sc.appendChild(field5);
+		sc.appendChild(field6);
+
+
+
+		
+
+	}
+
+	function Create_Chip(pk, name)
+	{
+
+		var index = indicator_arr.indexOf(pk);
+
+		if (index == -1) {		  
+			indicator_arr.push(pk);
+			document.getElementById("study_list").value= indicator_arr;
+			indicator_name_arr.push(name);
+			var chip_str= "<div class=\"chip\" id="+pk+">";
+			chip_str += name;
+			chip_str += "<span class=\"closebtn\" onclick=\"delete_chip(this)\">&times;</span></div>";
+			document.getElementById('chips').insertAdjacentHTML('beforeend', chip_str);
+		}
+		
+	}
+	function delete_chip(chip_element){
+			var chip_id = chip_element.parentElement.id;
+			var index = indicator_arr.indexOf(parseInt(chip_id,10));
+			
+			if (index > -1) {
+				indicator_arr.splice(index, 1);
+				indicator_name_arr.splice(index, 1);
+				
+			}
+			
+			document.getElementById("study_list").value= indicator_arr;
+			chip_element.parentElement.style.display='none';
+			
+		}
+
+
+		function form_submit1() {
+			// Submission of modal form
+
+			var frm  = $('#formsubmit1');
+			frm.submit();
+		}
+
+//It filters the search according to the list
+function filterFunction(id,div) {
+	var input, filter, ul, li, a, i;
+	input = document.getElementById(id);
+	filter = input.value.toUpperCase();
+	div = document.getElementById(div);
+	a = div.getElementsByTagName("a");
+	for (i = 0; i < a.length; i++) {
+		txtValue = a[i].textContent || a[i].innerText;
+		if (txtValue.toUpperCase().indexOf(filter) > -1) {
+			a[i].style.display = "";
+		} else {
+			a[i].style.display = "none";
+		}
+	}
+}
+function myFunction(div) {
+	// Toggles Instrument list and study list
+	document.getElementById(div).classList.toggle("show");
+}
+
+
+function myFunction2(id) {
+		
+// Creates dynamic list items for strategy fields
+
+		var div=document.getElementById(id).nextElementSibling.id;
+		var ul_id = document.getElementById(div).querySelectorAll("ul");
+		document.getElementById(div).classList.toggle("show");
+		
+
+		var ul = document.getElementById(ul_id[0].id);
+		ul.innerHTML='';
+	  
+	    if(id.includes("comparator"))
+	    {
+
+	    	
+
+	    	 for(var key in comparators) 
+	    	 {
+	    	 	var li = document.createElement("li");
+	    	 	var a = document.createElement("a");
+
+
+	    	 	var value = comparators[key];
+	    	 	a.appendChild(document.createTextNode(key));
+	    	 	a.setAttribute("onclick","set('"+id+"','"+key+"')");
+
+	    	 	li.appendChild(a);
+	    	 	ul.appendChild(li);
+
+
+	    	 }
+
+	    	}
+
+	    	else
+	    	{
+
+	    		var arrayLength = indicator_name_arr.length;
+	    		for (var i = 0; i < arrayLength; i++)
+	    		 {
+
+				    var li = document.createElement("li");
+				    var a = document.createElement("a");   
+
+				    a.appendChild(document.createTextNode(indicator_name_arr[i]));
+				    a.setAttribute("onclick","set('"+id+"','"+indicator_name_arr[i]+"')");
+
+				    li.appendChild(a);			    
+				    ul.appendChild(li);
+
+				}
+			}
+}
+function set(id,val)
+{
+	// Changes the values of strategy fields
+
+		document.getElementById(id).value= val;
+		document.getElementById(id).innerHTML= val;
+
+		var pos=id.split("-");
+		if(pos[1].length == 1)
+		{
+			pos[1]=pos[1]+"2";
+			document.getElementById("strategy_part-"+pos[1]).value= val;
+		}
+		else
+		{
+			document.getElementById("strategy_part-"+pos[1]).value= study_dict[val];
+			document.getElementById("strategy_indicator_name-"+pos[1]).value= model_dict[val];
+		
+		
+		}
+		
+	}
+
+	function Instrument_Select(name,fullname,token,div) {
+
+// Selection of Instrument
+
+		instrument_list=name+", "+instrument_list;
+		instrument_token_list=token+","+instrument_token_list;
+		document.getElementById("instrument_list_disp").value= instrument_list;
+		document.getElementById(div).display="none";
+		document.getElementById("token_list").value= instrument_token_list;
+
+
+	}
+
+	function Watchlist_Select(name,comp_list,div) {
+
+// Selection of Instrument
+
+		instrument_list=name+", "+instrument_list;
+		instrument_token_list=comp_list+","+instrument_token_list;
+		document.getElementById("instrument_list_disp").value= instrument_list;
+		document.getElementById(div).display="none";
+		document.getElementById("token_list").value= instrument_token_list;
+
+
+	}
+
+	function clear_all()
+	{
+		// Clear in Dropdown
+		instrument_list="";
+		instrument_token_list="";
+		document.getElementById("instrument_list_disp").value= instrument_list;
+	}
+
+	function PopUp(indicator)
+	{
+		// Creates the pop up form
+
+		form_str ="";
+		indicator=indicator.valueOf();       
+		var formUrl = '{% url "indicator_popup" 123 %}'.replace('123', indicator);  
+		
+
+		fetch(formUrl).then(function(response) {
+			response.json().then(function(data) {
+				var form_str = "";
+				fields = data['fields'];
+				choice = data['choice'];
+
+				for(var key in fields){
+
+
+
+					form_str += "<div class=\"form-group\"><label class=\"label\" for='"+key+"'>"+key+"</label>";
+
+					if(choice.hasOwnProperty(key)){
+				
+				  form_str += "  <select class='form-control' name='"+key+"'>";
+				
+
+				  for(var key2 in choice[key]){
+				  	form_str += "<option value='"+choice[key][key2]+"'>"+choice[key][key2]+"</option>";
+					  
+					}
+
+					form_str += "</select>";
+				}
+				else{
+					form_str += "  <input type=\"text\" class=\"form-control\"  name='"+key+"' value= '"+fields[key]+"' required>";
+
+				}
+				form_str +="<br><br></div>";
+
+			}
+
+
+			form_str+="<input type=\"hidden\" id=\"selected_indicator\" name=\"selected_indicator\" value="+indicator+">";
+
+			document.getElementById("dynamic_form").innerHTML = form_str;
+
+		});
+		});   
+
+	}
+
+	$(document).on("click", function(event){
+
+
+// To-Do: Close dropdowns on outside click
+
+	});
+
+
+	$(document).ready(function() {	
+		// Submission and getting reply of modal form
+		$("#formsubmit1").on('submit', function(e) {
+			e.preventDefault();
+	
+		var frm = $('#formsubmit1')
+
+
+		$.ajax({
+			type: frm.attr('method'),
+			url: frm.attr('action'),
+			data: frm.serialize(),
+			dataType:'json',
+
+			beforeSend : function() {
+				
+			},
+
+			success: function(data) {
+				
+				Create_Chip(data['pk'],data['name']);
+
+				study_dict[data['name']]=data['pk'];
+				model_dict[data['name']]=data['model'];
+				// alert(data['pk']);					
+			},
+
+			error: function(result) {
+				alert('error');
+			}
+		});
+		e.preventDefault();
+	});	
+
+
+});
+
+
+
+</script>
+
+</body>
+</html>

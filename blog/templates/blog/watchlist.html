@@ -1,0 +1,292 @@
+ <!DOCTYPE html>
+ <html>
+ <head>
+ 	<title>Sabertooth Investments</title>
+ 	<meta name="viewport" content="width=device-width, initial-scale=1">
+ 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+ 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+ 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+ 	<style>
+ 	body {
+ 		font-family: Arial, Helvetica, sans-serif;
+ 	}
+ 	* {
+ 		box-sizing: border-box;
+ 		font-size: 18px;
+ 	}
+ 	/* Create a column layout with Flexbox */
+ 	.row {
+ 		display: flex;
+ 	}
+ 	#ma1{
+ 		visibility: hidden;
+ 	}
+ 	#clear{
+ 		margin-top: 10px;
+ 	}
+ 	#boll1{
+ 		visibility: hidden;
+ 	}
+
+ 	/* Left column (menu) */
+ 	.left {
+ 		flex: 15%;
+ 		height: 100vh;
+
+ 		padding-left: 20px;
+ 		/*padding: 10px 0;*/
+ 	}
+ 	.left h2 {
+ 		padding-left: 8px;
+ 	}
+
+ 	.right {
+ 		flex: 100%;
+ 		padding-left:65px;
+ 		margin-top: 20px;
+ 	}
+ 	.heading h1{
+ 		font-family: "Times New Roman", Times, serif;
+ 		font-size: 40px;
+ 		margin-bottom: 20px;
+ 	}
+ 	.right select {
+ 		font-size: 14px;
+ 		background-color:#ffffff;
+ 		border: hidden;
+ 		color: #000000;
+ 	}
+ 	.right p{
+ 		font-size: 16px;
+ 	}
+ 	.right b{
+ 		font-size: 16px;
+ 	}
+ 	.right input{
+ 		font-size: 14px;
+ 	}
+ 	#form1{
+ 		width: 400px;
+ 		height: 80px;
+ 	}
+ 	.optional
+ 	{
+ 		margin-left: 420px;
+ 		height: 100px;
+ 		width: 400px;
+
+ 	}
+
+
+ 	/* Style the search box */
+ 	#mySearch {
+ 		width: 100%;
+ 		font-size: 15px;
+ 		margin-top: 20px;
+ 		margin-bottom: 20px;
+ 		padding-top: 10px;
+
+ 		padding-bottom: 5px;
+ 		padding-left: 11px;
+ 		border:1px solid #ddd;
+ 	}
+ 	/* Style the navigation menu inside the left column */
+ 	#myMenu {
+ 		list-style-type: none;
+ 		padding: 0;
+ 		margin: 0;
+ 		/*width:30px;*/
+ 		overflow: auto;
+ 		height: 100vh;
+ 	}
+ 	.navbar { margin-bottom: 10px;
+ 		background-color:#000000;
+ 	} 
+ 	#naav a { 
+ 		color: #ffffff; 
+ 	}
+ 	#naav li a { 
+ 		color: #ffffff; 
+ 	}
+ 	#myMenu li a {
+ 		backgrxound-color: #fefefe;
+ 		padding: 12px;
+ 		text-decoration: none;
+ 		overflow: hidden;
+ 		font-size: 14px;
+ 		width: 200px;
+ 		color: #6d6d6d;
+ 		display: block
+ 	}
+ 	#myMenu li a:hover {
+ 		background-color: #eee;
+ 	}
+
+ 	.chip {
+ 		display: inline-block;
+ 		padding: 0 25px;
+ 		height: 50px;
+ 		font-size: 16px;
+ 		line-height: 50px;
+ 		border-radius: 25px;
+ 		background-color: #f1f1f1;
+ 		margin:5px;
+ 	}
+
+ 	.closebtn {
+ 		padding-left: 10px;
+ 		color: #888;
+ 		font-weight: bold;
+ 		float: right;
+ 		font-size: 20px;
+ 		cursor: pointer;
+ 	}
+
+ 	.closebtn:hover {
+ 		color: #000;
+ 	}
+ 	#company_chips {
+ 		width = 100%;
+ 		margin-top: 100px;
+ 	}
+
+
+ </style>
+</head>
+
+
+
+<body>
+
+	<script>
+
+		var comp_arr = [];
+
+		function myFunction() {
+			var input, filter, ul, li, a, i;
+			input = document.getElementById("mySearch");
+			filter = input.value.toUpperCase();
+			ul = document.getElementById("myMenu");
+			li = ul.getElementsByTagName("li");
+			for (i = 0; i < li.length; i++) {
+				a = li[i].getElementsByTagName("a")[0];
+				if (a.innerHTML.toUpperCase().indexOf(filter) > -1) {
+					li[i].style.display = "";
+				} else {
+					li[i].style.display = "none";
+				}
+			}
+		}
+
+
+		function compselect(token, name)
+		{
+			var index = comp_arr.indexOf(token);
+			if (index == -1) {			  
+				comp_arr.push(token)
+				document.getElementById("instrument").value= comp_arr;
+
+				var mydiv = document.getElementById("company_chips");
+
+				var chip_str= "<div class=\"chip\" id="+token+">";
+				chip_str += name;
+				chip_str += "<span class=\"closebtn\" onclick=\"delete_chip(this)\">&times;</span></div>";
+				// window.alert(chip_str);
+				// mydiv.appendChild(document.createTextNode(chip_str));
+				document.getElementById('company_chips').insertAdjacentHTML('beforeend', chip_str);
+			}
+			
+		}
+
+		function delete_chip(chip_element){
+			var chip_id = chip_element.parentElement.id;
+			var index = comp_arr.indexOf(chip_id);
+			if (index > -1) {
+				comp_arr.splice(index, 1);
+			}
+			chip_element.parentElement.style.display='none';
+			document.getElementById("instrument").value= comp_arr;
+		}
+
+		function clear_all()
+		{
+			for(var i=0; i<comp_arr.length; i++){
+				document.getElementById(comp_arr[i].valueOf()).style.display='none';
+			}
+			comp_arr = [];
+			document.getElementById("instrument").value= comp_arr;
+		}
+
+	</script>
+
+
+	<nav class="navbar navbar-default" id="naav" >
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="sabertoothtech.in">Sabertooth</a>
+			</div>
+			<ul class="nav navbar-nav">
+				<li><a href="{% url 'clist' %}">Home</a></li>
+				<li><a href="{% url 'manage' %}">Manage</a></li>
+				<li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+				<li><a href="{% url 'stratgroup' %}">Strategy Group</a></li>
+			</ul>
+		</div>
+	</nav>
+
+
+	<div class="row">
+		<div class="left" style="background-color:#fbfbfb;">
+
+			<input type="text" id="mySearch" onkeyup="myFunction()" placeholder="Search.." title="Type in a category">
+			<ul id="myMenu">
+
+				{% for company in companies %}
+
+				<li><a onclick="compselect('{{company.token}}', '{{company.name}}')"> {{company.fullname}}({{company.name}})</a></li>  
+
+				{% endfor %}
+
+
+			</ul>
+		</div>
+
+		<div class="right" style="background-color:#ffffff">
+
+			<div id="form1"> 
+
+
+
+
+
+				<form action="" method="POST">
+					{% csrf_token %}
+
+					<div class="form-group">
+						<label for="text">Watchlist Name</label>
+						<input type="text" class="form-control" id="wlist_name" name="wlist_name" required="true" />
+					</div>
+					<div class="form-group">
+						<!-- <label for="text">Instrument</label> -->
+						<input type="hidden" class="form-control" id="instrument" name="instrument" required="true" readonly="true"/>
+					</div>
+
+					<button type="submit" id="sub" formaction="submit_watchlist" value="Submit" class="btn btn-primary">Next</button>
+					<br>
+					<a class="btn btn-default" id="clear" onclick="clear_all()">Clear</a>
+				</form>			
+
+
+			</div>
+			<div id="company_chips"></div>
+		</div>
+
+	</div>
+
+
+</div>
+</div>
+
+
+</body>
+</html>

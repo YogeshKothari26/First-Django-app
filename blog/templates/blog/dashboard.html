@@ -1,6 +1,3 @@
-
-
-
 <!-- {% load static %} -->
 <html>
 	<head>
@@ -48,7 +45,13 @@
 				{ 
 				 color: #ffffff; 
 				}
+				#anchor
+				{
+					font-size: 40px;
+					color: #0000ff;
+				}
 				 #naav li a 
+				
 				{ 
 					display: inline;
 					color: #ffffff;
@@ -66,7 +69,7 @@
 				 .tab1 th{
 					font-weight: bold;										
 				 }
-				 #my_table{
+				 #my_table,#my_table1{
 				 	/*width: 1400px;*/
 				 	background-color: #f0f0f0;
 				 }
@@ -91,6 +94,7 @@
   <div id="rest">
 
   	<h1 align="middle">Dashboard</h1>
+  	
 
 
 	<div class="tab1">
@@ -99,11 +103,14 @@
 	</table><br><br>
 	<table id="my_table1" class="table table-light table-bordered table-hover table-responsive ">
 	</table>
+	<p align="middle" id="alert" style="font-size:40px"></p>
 
 	</div>
 
 	<a  href="{% url 'revoke' task_id %}"><b>Click here to reset </b></a>
 	</div>
+
+
 
 	
 	<script>
@@ -111,60 +118,21 @@
 		function updateProgress (progressUrl) {			
 			fetch(progressUrl).then(function(response) {
 				response.json().then(function(data) {
-					var temp = data
-
-					var str = "", trueStr="", falseStr="";
-					data = temp['strategy_meta']
-				// header
-					for(var key1 in data){
-						str += "<thead class=\"thead-dark\"><tr><th>Strategy</th>";
-						for(key2 in data[key1]){
-							if(key2 != 'status'){
-								str += "<th>" + key2 +"</th>";
-							}
-						}
-						str += "</tr></thead>";
-						break;
-					}
-
-					for(var key1 in data){
-
-						if(key1 == "DO_NOT_DELETE(884737)"){
-							continue;
-						}
-
-						
-						if(data[key1]['status'] == 'True'){
-							trueStr += "<tr bgcolor=\"#98FB98\"><th>"+key1+"</th>";
-							for(key2 in data[key1]){
-								if(key2 != 'status'){
-									trueStr += "<td>" + data[key1][key2] +"</td>";
-								}
-							}
-							trueStr += "</tr>";
-						}
-						else{
-							falseStr += "<tr><th>"+key1+"</th>";
-							for(key2 in data[key1]){
-								if(key2 != 'status'){
-									falseStr += "<td>" + data[key1][key2] +"</td>";
-								}
-							}
-							falseStr += "</tr>";
-						}
-						
-					}
-
-					document.getElementById("my_table").innerHTML = "<table class=\"table table-responsive\" width=\"100%\" cellspacing=\"2\">" + str + trueStr + falseStr + "</table>";
-
-					
-					var str = "", trueStr="", falseStr="";
+					var temp = data					
+					var str = "";
 					data = temp['strategy_group_meta']
+					if( Object.keys(data).length <= 0){
+						document.getElementById('alert').innerHTML = "You haven't created any strategies. Click <a id='anchor' href=\"{% url 'clist' %}\" > here </a> to create strategies";
+					}		
+					else{
+						document.getElementById('alert').innerHTML = "";
+					}			
+
 				
 					for(var key1 in data){
 						str += "<thead class=\"thead-dark\"><tr><th>Strategy Group</th>";
 						for(key2 in data[key1]){
-							if(key2 != 'status'){
+							if(key2 != 'color' && key2 != 'timestamp'){
 								str += "<th>" + key2 +"</th>";
 							}
 						}
@@ -173,47 +141,29 @@
 					}
 
 					for(var key1 in data){
-
-						if(key1 == "DO_NOT_DELETE"){
-							continue;
-						}
+						// if(key1 == "DO_NOT_DELETE"){
+						// 	continue;
+						// }
 						
-						if(data[key1]['status'] == 'True'){
-							trueStr += "<tr bgcolor=\"#98FB98\"><th>"+key1+"</th>";
-							for(key2 in data[key1]){
-								if(key2 != 'status'){
-									trueStr += "<td>" + data[key1][key2] +"</td>";
-								}
+						str += "<tr bgcolor=\""+data[key1]['color']+"\"><th>"+key1+"</th>";
+						for(key2 in data[key1]){
+							if(key2 != 'color' && key2 != 'timestamp'){
+								str += "<td>" + data[key1][key2] +"</td>";
 							}
-							trueStr += "</tr>";
 						}
-						else{
-							falseStr += "<tr><th>"+key1+"</th>";
-							for(key2 in data[key1]){
-								if(key2 != 'status'){
-									falseStr += "<td>" + data[key1][key2] +"</td>";
-								}
-							}
-							falseStr += "</tr>";
-						}
-						
+							str += "</tr>";						
 					}
 
-					document.getElementById("my_table1").innerHTML = "<table class=\"table table-responsive\" width=\"100%\" cellspacing=\"2\">" + str + trueStr + falseStr + "</table>";
+					document.getElementById("my_table1").innerHTML = "<table class=\"table table-responsive\" width=\"100%\" cellspacing=\"2\">" + str + "</table>";
 				});
 			});		
 		}
 			
-		function change(){			
-					// windows.alert("here 1");			
-					var progressUrl = '{% url "get_progress" task_id %}';  // django template usage		
-					setTimeout(updateProgress, 0, progressUrl);											
-				}
-			
-			// var progressUrl = '{% url "get_progress" task_id %}';  // django template usage		
-			// setTimeout(updateProgress, 200, progressUrl);
-			//document.getElementById("demo").innerHTML = 'Method End';
-		
+		function change(){				
+			var progressUrl = '{% url "get_progress" task_id %}';  // django template usage		
+			setTimeout(updateProgress, 0, progressUrl);											
+		}
+
 		
 	</script>
 </body>

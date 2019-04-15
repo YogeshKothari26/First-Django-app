@@ -1,6 +1,6 @@
 
 from django.shortcuts import render, redirect
-from .models import Strategy, Companies, Refreshed, Indicator, Choices,Strategy_Group
+from .models import Strategy, Companies, Refreshed, Indicator, Choices,Strategy_Group, Watch_List
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404
 from celery.result import AsyncResult
@@ -11,23 +11,72 @@ import logging
 import pandas as pd
 import os
 from django.apps import apps
-import blog.extras.access_token as AT
+from .user_functions import *
 from django.db.models import Q
+import django.contrib.auth as auth
 
 logger = logging.getLogger(__name__)
+# To- Do
+# Dropdown clear
 
+
+def login(request):
+	return render(request, 'blog/login.html', {})
+
+
+def error(request):
+	return render(request, 'blog/error.html', {})
+
+
+def login_submit(request):
+	print('submitted')
+	if request.method == 'GET':
+		return render(request, 'blog/login.html')
+
+	if request.method == 'POST':
+		username = request.POST.get('uname', '')
+		# username = request.POST.get('email', '')
+		password = request.POST.get('psw', '')
+
+		user = auth.authenticate(username=username, password=password)
+		if user is None:
+			print('None')
+			return redirect('error')
+		if not user.is_active:
+			print('not active')
+			return redirect('error')
+
+		# Correct password, and the user is marked "active"
+		auth.login(request, user)
+		# Redirect to a success page.
+		print('success!')
+		return redirect('clist')
 
 
 def clist(request):
-	Companies_List = Companies.objects.all()
+	print(type(request.user))
+	print(request.user.pk)
+	print(request.user)	
+	print('\n\n' + str(request.user.__dict__))
 
-	task_id = AT.get_task_id()
+	slist = Strategy.objects.filter(added_by=request.user)	
+	print('strat list :' +str(slist))
+	slist = Strategy_Group.objects.filter(added_by=request.user)	
+	print('strat group list :' +str(slist))
+
+	Companies_List = Companies.objects.all()
+	watchlist = Watch_List.objects.all()
+	
+	for w in watchlist:
+		w.company_list =  w.company_list[1:-1]
+
+	task_id = get_task_id(request.user.pk)
 
 	result = AsyncResult(task_id)
 	print('State = ' + str(result.state))
 
 	if(not result.state == "PROGRESS"):
-		task_obj = do_work.apply_async()
+		task_obj = do_work.delay(user_pk=request.user.pk)
 		task_id = task_obj.id
 		print('Assigned new ID = ' + str(task_id))
 
@@ -39,169 +88,34 @@ def clist(request):
 		a=a.split("\'")[0]
 		Indicators_List.append(a) 
 
-	return render(request, 'blog/nav.html', {'companies': Companies_List,"indicatorlist":Indicators_List})
-
-
-
-def createstrategy(request):
-	if request.method == 'POST':
-		if request.POST.get('indicator1') and request.POST.get('indicator2') and request.POST.get('comparator') and request.POST.get('name') and request.POST.get('instrument') :
-
-			Strategy_Ids = list()
-			inst_str = str(request.POST.get('instrument'))
-			Instrument_List = list(inst_str.split(","))[:-1]
-
-			for instruments in Instrument_List:
-				strat=Strategy()             
-				strat.comparator= request.POST.get('comparator')
-				strat.name= request.POST.get('name')
-				strat.instrument= instruments
-				i1=apps.get_model("blog",request.POST.get('indicator1'))()
-				i1.save()
-				i2=apps.get_model("blog",request.POST.get('indicator2'))()
-				i2.save()
-				strat.indicator1=i1 
-				strat.indicator2=i2
-				strat.task_id = "task_obj.id"
-				strat.save()
-				Strategy_Ids.append(strat.id)
-		  
-			Indicator1_Fields=strat.indicator1._meta.get_fields(include_parents=False)
-		
-			Indicator1_Fields_Dict=dict()
-			Indicator2_Fields_Dict=dict()
-
-			for a in Indicator1_Fields:
-				t=a
-				a=str(a).split(".")[2]
-				a=a.split("\'")[0]
-				Indicator1_Fields_Dict[a]=t.default
-
-			Indicator2_Fields=strat.indicator2._meta.get_fields(include_parents=False)
-			sp2=list()
-
-			for a in Indicator2_Fields:
-				t=a
-				a=str(a).split(".")[2]
-				a=a.split("\'")[0]
-				Indicator2_Fields_Dict[a]=t.default
-
-			Companies_List= Companies.objects.all()  
-			indilist=Indicator.__subclasses__() 
-			Indicators_List=list()
-			for a in indilist:
-				a=str(a).split(".")[2]
-				a=a.split("\'")[0]
-				Indicators_List.append(a)
-			choice=Choices()   
-			
-			Instrument_List.clear()    
-			
-			return render(request, "blog/nav2.html",{'companies': Companies_List,"strat":strat.id,"fieldlist1":Indicator1_Fields_Dict,"fieldlist2":Indicator2_Fields_Dict,"indicatorlist":Indicators_List,"choice":choice, "strat_obj" : strat, 
-				"Strategy_Ids":str(Strategy_Ids)})
-	else:
-		Companies_List = Companies.objects.all()
-		return render(request, "blog/nav.html",{'companies': Companies_List})  
-
-
-
-def updatestrategy(request):
-	Companies_List = Companies.objects.all()
-	if request.method == 'POST':
-
-		received = request.POST.get('Strategy_Ids')
-		import ast
-		Strategy_Ids = ast.literal_eval(received)
-
-		for ids in Strategy_Ids:
-			sid=ids
-			strat = get_object_or_404(Strategy,pk=sid)
-			strat.indicator1 = strat.indicator1.down_cast()
-			strat.indicator2 = strat.indicator2.down_cast()
-
-			Companies_List = Companies.objects.all()
-
-			indi1=apps.get_model("blog",str(strat.indicator1.__class__.__name__))()
-
-			indi2=apps.get_model("blog",str(strat.indicator2.__class__.__name__))()
-
-			fullfieldlist=indi1._meta.get_fields(include_parents=False)
-			shortfieldlist=list()
-			i=0
-
-			for a in fullfieldlist:
-				if i==0:
-					pass
-				else:
-					
-					a=str(a).split(".")[2]
-					a=a.split("\'")[0]
-					shortfieldlist.append(a)
-				i+=1
-		   
-			c=True
-
-
-			for a in shortfieldlist:
-				if not request.POST.get(str(a)+"1"):
-					c=False
-
-			fullfieldlist2=indi2._meta.get_fields(include_parents=False)
-			shortfieldlist2=list()
-			i=0
-
-			for a in fullfieldlist2:
-				if i==0:
-					pass
-				else:
-				   
-					a=str(a).split(".")[2]
-					a=a.split("\'")[0]
-					shortfieldlist2.append(a)
-				i+=1
-		  
-
-			for a in shortfieldlist2:
-				if not request.POST.get(str(a)+"2"):
-					c=False
-
-
-
-			if c:
-				for a in shortfieldlist:
-				   setattr(strat.indicator1,a,request.POST.get(str(a)+"1"))
-
-				for a in shortfieldlist2:
-				   setattr(strat.indicator2,a,request.POST.get(str(a)+"2"))
-			
-			strat.indicator1.save() 
-			strat.indicator2.save()
-			strat.save()
-			s = Strategy.objects.all().filter(pk = strat.id)
-			s = list(s)[0]
-			print('Strategy created = '+str(s))
-
-		Strategy_Ids.clear()
-		r = Refreshed(name="Strategy")
-		r.save()
-		print("\nAdded refresh object")
-
-		return redirect('clist') 
+	return render(request, 'blog/homepage3.html', {'companies': Companies_List,"indicatorlist":Indicators_List, 
+		"watchlist" : watchlist})
 
 
 
 
-def display_dashboard(request):    	
+def manage(request):
+	print(request.user)
+	strat_list = list(Strategy_Group.objects.all())
+	w_list = list(Watch_List.objects.all())
 
-	strat_list = Strategy.objects.all()
+	return render(request, 'blog/manage2.html', {"strat_list": strat_list, 'w_list':w_list})
 
-	task_id = AT.get_task_id()
+
+
+
+def display_dashboard(request):     
+
+	strat_list = Strategy.objects.all() 
+
+	task_id = get_task_id(request.user.pk)
 
 	result = AsyncResult(task_id)
 	print('State = ' + str(result.state))
+	print('task_id = '+str(task_id))
 
 	if(not result.state == "PROGRESS"):
-		task_obj = do_work.apply_async()
+		task_obj = do_work.delay(user_pk=request.user.pk)
 		task_id = task_obj.id
 		print('Assigned new ID = ' + str(task_id))
 
@@ -212,11 +126,12 @@ def display_dashboard(request):
 
 def revoke(request,task_id):
 	strat_list = Strategy.objects.all()
-	task_obj = do_work.apply_async()
+	task_obj = do_work.delay(user_pk=request.user.pk)
 
-	AT.set_task_id(task_obj.id)
+	set_task_id(request.user.pk, task_obj.id)
 
 	return redirect('/dashboard',{"task_id":task_obj.id,"strat_list":strat_list})
+
 
 
 
@@ -226,49 +141,58 @@ def get_progress(request, task_id):
 	data = dict()
 	try:
 		data = result.info
+		# print('\n####Data : ' + str(data))
 	except:
+		# print('Error RESULT \n state = ' + str(result.state) + '\tDetails = '+str(result.info))
 		print('EXCEPT')
-		pass	
+		pass    
 
-	return HttpResponse(json.dumps(data), content_type='application/json') 
-
-	
-			
+	return HttpResponse(json.dumps(data), content_type='application/json')  
 
 
-def manage(request):
-	from django.db.models import Q
-	strat_list = Strategy.objects.filter(~Q(name = "DO_NOT_DELETE"))
 
-	strat_group = Strategy_Group.objects.filter(~Q(name = "DO_NOT_DELETE"))
-
-	return render(request, 'blog/manage.html',{"strat_list":strat_list, "strat_group_list":strat_group})
-
-def strat_detail(request,pk):
+def delete_strategy(pk):
+	print('delete_strategy :'+str(pk))
 	strat = get_object_or_404(Strategy,pk=pk)
 
 	strat.indicator1.delete()
 	strat.indicator2.delete()
-	strat.delete()
+	strat.delete()	
+
+
+def delete_strat_group(request,pk):
+	print('delete_strat_group :'+str(pk))
+	sg = get_object_or_404(Strategy_Group,pk=pk)
+	l = sg.exp.split(' ')
 	
-	r = Refreshed(name="Strategy")
-	r.save()
+	print('split = '+str(l))
+	for i in l:
+		if(i not in ['and', 'or', 'not', 'True', 'False']):
+			try:
+				delete_strategy(int(i))
+			except:
+				print('except -> strategy :'+i)
+
+	sg.delete()
+	
+	set_refresh(request.user.pk, True)
 	print("\nAdded refresh object")
 	return redirect('manage')
 
-def strat_group_detail(request,pk):
-	strat = get_object_or_404(Strategy,pk=pk)
-	strat.delete()
+
+def delete_watchlist(request,pk):
+	print('delete_watchlist :'+str(pk))
+	w = get_object_or_404(Watch_List,pk=pk)
+	w.delete()
 	
-	r = Refreshed(name="Strategy_Group")
-	r.save()
-	print("\nAdded refresh object")
-	return redirect('manage')
+	return redirect('manage')       
 
 
-def delete_all(request):	
+def delete_all(request):    
+	print('delete_all')
 
-	for strat in Strategy.objects.filter(~Q(name = "DO_NOT_DELETE")):
+	# for strat in Strategy.objects.filter(~Q(name = "DO_NOT_DELETE")):
+	for strat in Strategy.objects.all():
 		try:
 			strat.indicator1.delete()
 			strat.indicator2.delete()
@@ -276,51 +200,217 @@ def delete_all(request):
 		except:
 			strat.delete()
 
-	for strat in Strategy_Group.objects.filter(~Q(name = "DO_NOT_DELETE")):
+	# for strat in Strategy_Group.objects.filter(~Q(name = "DO_NOT_DELETE")):
+	for strat in Strategy_Group.objects.all():
 		strat.delete()
 
-	r = Refreshed(name="Strategy")
-	r.save()
-	r = Refreshed(name="Strategy_Group")
-	r.save()
+	set_refresh(request.user.pk, True)
 	print("\nAdded refresh object")
 	return redirect('manage')
 
 
 
-def stratgroup(request):
-
-	global Strategy_Ids
-	Strategy_Ids.clear()
-
-	strat_list = Strategy.objects.filter(~Q(name = "DO_NOT_DELETE"))
-
-
-	return render(request, 'blog/stratgroup.html',{"strat_list":strat_list})
-
-
-def stratgroupsubmit(request):
+def delete_extra_indicators():
+	slist = Strategy.objects.all()
+	ilist = [s.indicator1 for s in slist]		
+	ilist = ilist + [s.indicator2 for s in slist]	#used indicators
+	ilist = list(set(ilist))
 	
-	Companies_List = Companies.objects.all() 
+	for i in Indicator.objects.all():
+		if i not in ilist:
+			print('deleting : '+str(i))
+			i.delete()
+
+
+
+def indicator_popup(request, selected_indicator):
+	print('\nindicator_popup')
+	data = dict()
+	try:
+		fields = dict()
+		i = apps.get_model("blog",selected_indicator)
+		print('i = '+str(i))    
+		for f in i._meta.get_fields(include_parents=False)[1:]:
+			fields[str(f).split(".")[2]] = f.default
+		choice=Choices()
+		data = {'fields' : fields, 'choice':choice.__dict__}
+
+		print(data)
+
+	except:
+		pass
+
+	return HttpResponse(json.dumps(data), content_type='application/json') 
+
+
+
+def watchlist(request):
+	Companies_List = Companies.objects.all()
+
+	return render(request, 'blog/watchlist.html', {'companies': Companies_List})
+
+def submit_watchlist(request):
+	if request.method == 'POST':
+		if request.POST.get('instrument') and request.POST.get('wlist_name'):
+			inst_str = "["+ str(request.POST.get('instrument')) +"]"
+			w = Watch_List()
+			w.name = request.POST.get('wlist_name')
+			w.company_list = inst_str
+			w.save()
+			print("Done")
+			print("Instruments Are: "+inst_str+ ","+w.name+","+ w.company_list)
+	return redirect('watchlist')
+
+
+def create_indicator(request):
+	print("view : create_indicator")
 
 	if request.method == 'POST':
+		
+		if request.POST.get('selected_indicator'):          
+			selected_indicator = request.POST.get('selected_indicator')
+			i = apps.get_model("blog",selected_indicator)() 
+			model_name=type(i)
+			print(model_name.__name__)      
+		
 
-		group=Strategy_Group()
-		group.name=request.POST.get('groupname')
-		group.exp=request.POST.get('groupid') 
-		group.display = request.POST.get('groupstring')
-		group.save()
+			fields  = [str(f).split(".")[2]   for f in i._meta.get_fields(include_parents=False)[1:]  ]
+			print('fields = '+str(fields))
 
-		print("Group created with "+ group.name+"   "+group.exp)
+			for f in fields:
+				setattr(i, f, request.POST.get(f))
+			i.save()
 
-		r = Refreshed(name="Strategy_Group")
-		r.save()
+			print('i  = '+str(i))
 
-	return render(request, "blog/nav.html",{'companies': Companies_List})  
-
-
+		data = {'pk' : i.pk, 'name' : str(i),'model':str(model_name.__name__)}          
+						
+	return HttpResponse(json.dumps(data), content_type='application/json') 
 
 
+
+
+def form_sub(request):
+	Temporary_Strategy_Ids=list()
+	list_of_list=list()
+	import ast
+	comparator_dict=dict()
+	comparator_dict= {
+			"GreaterThan":"1",
+			"LessThan":"2",
+			"CrossesAbove":"3",
+			"CrossesBelow":"4"
+	}
+
+	sg_display = ""
+	if request.method == 'POST':
+
+		no_of_strat=request.POST.get('no_of_strat')
+
+		received_tokens = request.POST.get('token_list')        
+		tokens = list(set(ast.literal_eval(received_tokens)))
+
+		for i in range(1,int(no_of_strat)+1):
+			print("i is"+str(i))
+			Temporary_Strategy_Ids.clear()
+			for j in tokens:
+				Full_Name=request.POST.get('strategy_indicator_name-'+str(i)+"1")
+				className1=apps.get_model("blog",Full_Name)
+
+				Full_Name=request.POST.get('strategy_indicator_name-'+str(i)+"3")
+				className3=apps.get_model("blog",Full_Name)
+		
+			
+				strat=Strategy()  
+					 
+				strat.comparator= comparator_dict[request.POST.get('strategy_part-'+str(i)+"2")]
+				print(strat.comparator)
+
+				strat.name= str(i)+":"+request.POST.get('group_name')+"("+str(j)+")"
+				strat.instrument= str(j)  
+				strat.added_by = request.user              
+				
+				i1 = get_object_or_404(className1,pk=request.POST.get('strategy_part-'+str(i)+"1"))
+				i2 = get_object_or_404(className3,pk=request.POST.get('strategy_part-'+str(i)+"3"))
+
+				# For cloning of objects
+				
+				i1.pk=None
+				i2.pk=None
+				i1.id=None
+				i2.id=None
+				i1.save()
+				i2.save()
+				strat.indicator1=i1
+
+				strat.indicator2=i2
+				print(strat.indicator1)
+				print(strat.indicator2)
+				print('strat user = '+str(strat.added_by))
+				strat.task_id = "task_obj.id"
+				strat.save()
+
+				print("saved")
+				Temporary_Strategy_Ids.append(strat.id)
+				print(str(strat.id)+" "+str(Temporary_Strategy_Ids))
+				print("list is "+str(list_of_list))
+
+
+
+			list_of_list.append(Temporary_Strategy_Ids.copy())
+			print("here")
+
+
+		print(str(list_of_list))		
+
+		# For strategy groups
+
+		for index1, val_token in enumerate(tokens):
+			group_id_string=str()
+			group_name_string=str()
+			group_name=request.POST.get('group_name')
+
+			for index2 in range(int(no_of_strat)):
+				if(group_id_string == ""):
+					group_id_string=str(list_of_list[index2][index1])
+
+				else:
+					group_id_string=str(group_id_string)+" "+str(list_of_list[index2][index1])
+
+				i1 = get_object_or_404(Strategy,pk=list_of_list[index2][index1])
+				group_name_string=str(group_name_string)+" "+str(i1)
+				# sg_display = sg_display + 
+				if(index2!=(int(no_of_strat)-1)):
+					cond = str(request.POST.get('strategy_condition-'+str(index2+1)))
+					group_id_string=str(group_id_string)+" "+ cond
+					group_name_string=str(group_name_string)+" "+cond
+
+
+
+			group=Strategy_Group()
+			group.name=request.POST.get('group_name')+":"+str(val_token)
+			group.exp=group_id_string 
+			group.display =group_name_string
+			group.entry_condition=request.POST.get('entry_condition')        
+			comp_name = Companies.objects.filter(token = val_token)
+			group.comp_name = str(list(comp_name)[0].name)
+			group.added_by = request.user
+			group.save()
+
+			print('group user = '+str(group.added_by))
+			set_refresh(request.user.pk, True)
+			print("\nAdded refresh object")
+
+			print("Group created with "+ str(group.name)+"   "+str(group.exp))
+
+		
+
+		# Clearing out extra strategies
+
+		received_studies=request.POST.get('study_list')
+		studies=ast.literal_eval(received_studies)
+
+	return redirect('clist')
 
 
 

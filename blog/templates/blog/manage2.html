@@ -1,0 +1,182 @@
+<!-- {% load static %} -->
+<html>
+<head>
+	<title>Sabertooth Investments</title>
+	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+
+	<link href="//fonts.googleapis.com/css?family=Lobster&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+	<style>
+		body {
+			font-family: Arial, Helvetica, sans-serif;
+
+		}
+		* {
+			box-sizing: border-box;
+			font-size: 18px;
+		}
+
+		.strategies{
+			font-size: 14px;
+		}
+		#delete{
+
+			background-color: #ff0000;
+			margin: 20px;
+			float: right;
+		}
+		.navbar { 
+			margin-bottom: 10px;
+			background-color: #000000;
+
+		}
+		#rest{
+			margin-left: 10px;
+		} 
+
+
+		.left{
+
+			float:left;
+
+
+
+			width: 200px;
+
+		}
+		.right{
+			float:left;
+			padding-left: 200px;
+		}
+		#naav a 
+		{ 
+			color: #ffffff; 
+		}
+		#naav li a 
+		{ 
+			color: #ffffff;
+		}
+
+		#demo1,#demo2{
+			width : 32%;
+			margin: 20px;
+
+
+
+		}
+
+	</style>
+</head>
+
+<body onload="change()">
+	<nav class="navbar " id="naav" >
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="#">Sabertooth</a>
+			</div>
+			<ul class="nav navbar-nav">
+				<li><a href="{% url 'clist' %}">Home</a></li>
+				<li><a href="{% url 'manage' %}">Manage</a></li>
+				<li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+			</ul>
+		</div>
+	</nav>
+	<div id="rest">
+
+
+
+
+		<div class="list-group">
+			<div class="row">
+
+				<div class="col">
+					<h3 style="text-align: center;"> Strategy Group </h3>
+
+					{% for s in strat_list %}
+					<div class="list-group-item d-flex align-items-center disabled">
+						<div class="list-group-item list-group-item-action flex-column align-items-start ">
+							<div class="d-flex w-100 justify-content-between">
+								<h5 class="mb-1" style="font-weight: bold;">{{ s.name }}</h5>
+							</div>
+							<p class="mb-1" style="color: grey">{{ s.comp_name }}</p>
+
+							<button type="button" onclick="func_delete_strat_group('{{s.pk}}')"class="btn btn-primary" style="float: right;"> Delete </button>
+
+						</div>
+					</div>
+					{% endfor %}
+					<div style="padding-top: 3%; text-align: center;"> 
+						<button type="button" onclick="func_delete_all()" class="btn btn-primary"> Delete All </button>
+					</div>
+				</div>
+
+
+				<div class="col">
+					<h3 style="text-align: center;"> Watchlist </h3>
+
+					{% for w in w_list %}
+					<div class="list-group-item d-flex align-items-center disabled">
+						<div class="list-group-item list-group-item-action flex-column align-items-start">
+<!-- 							<div class="d-flex w-100 justify-content-between">
+								<h5 class="mb-1" style="font-weight: bold;">{{ w.name }}</h5>
+							</div> -->
+							<p class="mb-1" style="color: grey">{{ w.name }}</p>
+
+							<button type="button" onclick="func_delete_watchlist('{{w.pk}}')" class="btn btn-primary" style="float: right;"> Delete </button>
+						</div>
+					</div>
+					{% endfor %}
+
+				</div>
+
+			</div>
+		</div>
+
+
+
+		<script>
+
+
+			function func_delete_watchlist(pk) {
+				if (confirm("Are you sure you want to delete the Watchlist?")) {
+					window.location.href = "{% url 'delete_watchlist' 123 %}".replace('123', pk);
+				}
+			}
+
+			function func_delete_strat_group(pk) {
+				if (confirm("Are you sure you want to delete the Strategy?")) {
+					window.location.href = "{% url 'delete_strat_group' 123 %}".replace('123', pk);
+				}
+			}
+
+			function func_delete_all(s) {
+				if (confirm("Are you sure you want to delete ALL strategies?")) {
+					window.location.href = "{% url 'delete_all' %}";
+				}
+			}
+
+
+		</script>
+	</body>
+	</html>		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

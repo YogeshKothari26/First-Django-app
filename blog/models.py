@@ -505,7 +505,7 @@ class Money_Flow_Index(Indicator):
 		df = self.get_small_data(kite_fetcher=kite_fetcher, instrument=instrument)
 
 		result = talib.MFI(high = df['high'], low = df['low'], close = df['close'], volume = df['volume'], timeperiod = period)
-		return np.round(result, 4)
+		return np.round(result.iloc[-1], 4)
 
 	def __str__(self):
 		return "MFI( "+ self.period +", "+ self.interval +")"
@@ -514,15 +514,14 @@ class VWAP(Indicator):
 	interval = models.CharField(max_length=100, default='minute')	
 
 	def evaluate(self, kite_fetcher, instrument):
-		period = int(self.period)
 		to_date = pd.Timestamp('today')
 		from_date = pd.Timestamp(to_date.date())
 
 		data = kite_fetcher.kite.historical_data(instrument_token = instrument, from_date = from_date , to_date = to_date, interval=self.interval, continuous=0)
 		df =  pd.DataFrame(data)
 
-		df['mean'] = (df.loc[: , 'low'] + df[:, 'high'] + df[:, 'close']) /3
-		df['mul'] = df[:, 'mean'] * df[:, 'volume']
+		df['mean'] = (df.loc[: , 'low'] + df.loc[:, 'high'] + df.loc[:, 'close']) /3
+		df['mul'] = df.loc[:, 'mean'] * df.loc[:, 'volume']
 		try:
 			result = np.sum(df.loc[:, 'mul']) / np.sum(df.loc[:, 'vol'])
 		except:
@@ -785,7 +784,7 @@ class Alligator(Indicator):
 		# print(str(self) + " : " + str(ma.iloc[-10:]))	
 		# return np.round(ma.iloc[-1 * offset] , 3)
 
-		print(str(self) + " : \n" + str(df.loc[:,'smma'].iloc[-10:]))	
+		# print(str(self) + " : \n" + str(df.loc[:,'smma'].iloc[-10:]))	
 		return np.round(df.loc[:, 'smma'].iloc[-1 * offset] , 3)
 
 	def __str__(self):
@@ -848,24 +847,40 @@ class Strategy(models.Model):
 	name=models.CharField(max_length=100)
 	comparator=models.CharField(max_length=100)
 	indicator1 = models.OneToOneField(Indicator, on_delete=models.CASCADE, related_name = 'indicator1', null=True)
-	indicator2 = models.OneToOneField(Indicator, on_delete=models.CASCADE, related_name = 'indicator2', null=True)
-	instrument=models.CharField(max_length=100)
+	indicator2 = models.OneToOneField(Indicator, on_delete=models.CASCADE, related_name = 'indicator2', null=True)	
+	instrument=models.CharField(max_length=100, default='884737')
+	added_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE)
 
 	def __str__(self):
-		return self.name +'('+ self.instrument +')'
-
-	def cond_str(self):
 		comp_dict = {'1' : ' > ', '2' :' < ', '3':' Crosses Above ', '4':' Crosses Below '}
 		return str(self.indicator1) + comp_dict[self.comparator] + str(self.indicator2)
 
 
 class Strategy_Group(models.Model):
 	name=models.CharField(max_length=100)
+	comp_name=models.CharField(max_length=100, default='NONE')
 	exp=models.CharField(max_length=200, default = 'True')
 	display=models.CharField(max_length=200, default = 'NONE')
+	entry_condition = models.CharField(max_length=200, default = 'Buy')
+	added_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE)
+
+
+	def __str__(self):
+		return self.display+" ("+self.comp_name+") "
+
+
+class Watch_List(models.Model):
+	name = models.CharField(max_length=100, default='None')
+	company_list = models.CharField(max_length=300, default = '')		#"[123,456,789]"
+	added_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE)
+	#list format already : use ast.literal_eval(company_list)
 
 	def __str__(self):
 		return self.name
 
-	def cond_str(self):
-		return self.exp
+class User_Data(models.Model):
+	user_fkey = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE)
+	task_id = models.CharField(max_length=100, default = '')
+	refresh = models.CharField(max_length=10, default = 'False')		#True or False
+	api_key = models.CharField(max_length=100, default = '0ld4qxtvnif715ls')
+	access_token = models.CharField(max_length=100, default = '')
